@@ -1,4 +1,4 @@
-package ru.krizhanovskiy.p2ptransfers.expressions;
+package ru.krizhanovskiy.p2ptransfers.exceptions;
 
 import java.util.List;
 

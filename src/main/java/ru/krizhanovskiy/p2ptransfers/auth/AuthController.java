@@ -16,10 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
-import ru.krizhanovskiy.p2ptransfers.expressions.ErrorResponse;
-import ru.krizhanovskiy.p2ptransfers.expressions.UserAlreadyExistsException;
+import ru.krizhanovskiy.p2ptransfers.exceptions.ErrorResponse;
+import ru.krizhanovskiy.p2ptransfers.exceptions.UserAlreadyExistsException;
+import ru.krizhanovskiy.p2ptransfers.models.user.User;
+import ru.krizhanovskiy.p2ptransfers.models.user.UserService;
 
 import java.net.URI;
+import java.security.Principal;
 
 @RestController()
 @RequiredArgsConstructor
@@ -27,6 +30,8 @@ import java.net.URI;
 @Tag(name = "Authentication", description = "API для авторизации и регистрации пользователей")
 public class AuthController {
     private final AuthService authService;
+    private final JwtService jwtService;
+    private final UserService userService;
 
     @PostMapping("/login")
     @Operation(summary = "Авторизация пользователя", description = "Аутентифицирует пользователя по email и паролю, возвращает JWT-токен")
@@ -55,7 +60,6 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-
     @Operation(summary = "Регистрация нового пользователя", description = "Создаёт нового пользователя и перенаправляет на эндпоинт логина")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Пользователь успешно создан, редирект на /login",
@@ -83,6 +87,25 @@ public class AuthController {
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(URI.create("/login"));
         return new ResponseEntity<>(headers, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/refresh")
+    @Operation(summary = "Обновление JWT", description = "Возвращает новый JWT-токен")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешно возвращён JWT-токен",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = AuthenticationResponse.class),
+                            examples = @ExampleObject(
+                                    name = "SuccessResponse",
+                                    value = "{\"jwt\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ5b3VyQGVtYWlsLmNvbSIsImlhdCI6MTc1MTU3ODUwNywiZXhwIjoxNzUxNjY0OTA3fQ.e-IYFQZjkXvuRvatANmUztccxSCNFRLW0k1zVKr5fUE\"}"
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<?> refresh(Principal principal) {
+        User user = userService.findByEmail(principal.getName());
+        return ResponseEntity.ok(new AuthenticationResponse(jwtService.generateToken(user)));
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)

@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.krizhanovskiy.p2ptransfers.expressions.UserNotFoundException;
+import ru.krizhanovskiy.p2ptransfers.exceptions.UserNotFoundException;
 
 import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
@@ -34,6 +34,7 @@ public class UserRepository {
     public User save(User user) {
         String sql = "INSERT INTO users (email, password_hash, first_name, last_name, middle_name, created_at) VALUES (?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
+        LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
             ps.setString(1, user.getEmail());
@@ -41,7 +42,7 @@ public class UserRepository {
             ps.setString(3, user.getFirstName());
             ps.setString(4, user.getLastName());
             ps.setString(5, user.getMiddleName());
-            ps.setTimestamp(6, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setTimestamp(6, java.sql.Timestamp.valueOf(now));
             return ps;
         }, keyHolder);
         return User.builder()
@@ -51,7 +52,7 @@ public class UserRepository {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .middleName(user.getMiddleName())
-                .createdAt(LocalDateTime.now())
+                .createdAt(now)
                 .build();
     }
 
