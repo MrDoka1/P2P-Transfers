@@ -101,6 +101,33 @@ public class AccountController {
         List<AccountResponse> accounts = accountService.findByUserIdReturnAccountResponse(user.getId());
         return ResponseEntity.ok(accounts);
     }
+    @GetMapping("/active")
+    @Operation(summary = "Получение списка всех активных счетов пользователя", description = "Возвращает список всех активных счетов")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список счетов успешно получен",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = AccountResponse.class, type = "array"),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "NonEmptyList",
+                                            value = "[{\"id\": 1, \"name\": \"Active account\", \"accountNumber\": \"20250707000000000001\", \"status\": \"ACTIVE\", \"createdAt\": \"2025-07-07T19:10:00\", \"balance\": 10000}," +
+                                                    "{\"id\": 2, \"name\": \"Closed account\", \"accountNumber\": \"20250707000000000002\", \"status\": \"ACTIVE\", \"createdAt\": \"2025-07-06T19:10:00\", \"balance\": 0}]",
+                                            summary = "Пример списка с двумя счетами"
+                                    ),
+                                    @ExampleObject(
+                                            name = "EmptyList",
+                                            value = "[]",
+                                            summary = "Пустой список счетов"
+                                    ),
+                            }
+                    ))
+    })
+    public ResponseEntity<List<AccountResponse>> getAllActiveAccounts(Principal principal) {
+        User user = userRepository.findByEmail(principal.getName());
+        List<AccountResponse> accounts = accountService.findByUserIdAndActiveReturnAccountResponse(user.getId());
+        return ResponseEntity.ok(accounts);
+    }
 
     @PatchMapping("/close/{accountNumber}")
     @Operation(summary = "Закрытие счета", description = "Закрывает счет по accountNumber")

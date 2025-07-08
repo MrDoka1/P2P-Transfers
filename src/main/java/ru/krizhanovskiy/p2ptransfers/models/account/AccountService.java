@@ -74,6 +74,10 @@ public class AccountService {
     public List<AccountResponse> findByUserIdReturnAccountResponse(Long userId) throws AccountNotFoundException {
         return accountRepository.findByUserIdWithBalance(userId);
     }
+    @Timed
+    public List<AccountResponse> findByUserIdAndActiveReturnAccountResponse(Long userId) throws AccountNotFoundException {
+        return accountRepository.findByUserIdWithBalanceAndActive(userId);
+    }
 
     @Timed
     public void closeAccount(long userId, String accountNumber) throws AccountNotFoundException {

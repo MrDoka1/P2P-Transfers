@@ -121,6 +121,15 @@ public class AccountRepository {
                 "GROUP BY a.id, a.name, a.account_number, a.status, a.created_at";
         return jdbcTemplate.query(sql, accountResponseRowMapper, userId);
     }
+    public List<AccountResponse> findByUserIdWithBalanceAndActive(long userId) {
+        String sql = "SELECT a.*, COALESCE(SUM(CASE WHEN t.recipient_account_id = a.id AND t.status = 'COMPLETED' THEN t.amount ELSE 0 END) - " +
+                "SUM(CASE WHEN t.source_account_id = a.id AND t.status = 'COMPLETED' THEN t.amount ELSE 0 END), 0) AS balance " +
+                "FROM accounts a " +
+                "LEFT JOIN transactions t ON t.recipient_account_id = a.id OR t.source_account_id = a.id " +
+                "WHERE a.user_id = ? and a.status = ?" +
+                "GROUP BY a.id, a.name, a.account_number, a.status, a.created_at";
+        return jdbcTemplate.query(sql, accountResponseRowMapper, userId, AccountStatus.ACTIVE.name());
+    }
 
     public long getIdByUserIdAndAccountNumber(long userId, String accountNumber) {
         String sql = "SELECT id FROM accounts WHERE user_id = ? AND account_number = ?";
